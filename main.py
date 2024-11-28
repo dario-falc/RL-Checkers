@@ -47,6 +47,9 @@ def main():
     while run:
         clock.tick(FPS)
         
+        if game.winner() != None:
+            print(game.winner())
+        
         # Event loop: viene eseguito x volte al secondo e controlla eventuali input, aggiorna il display ecc.
         for event in pygame.event.get(): # <- lista di eventi eseguiti dall'ultimo controllo
             
@@ -59,9 +62,7 @@ def main():
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse(pos)
                 
-                # Permette di muovere solo il nero (il bianco sarà l'AI) 
-                if game.turn == BLACK:
-                    game.select(row, col)
+                game.select(row, col)
                 
         
         # Creazione della scacchiera

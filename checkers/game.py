@@ -19,7 +19,7 @@ class Game:
     def _init(self):
         self.selected = None
         self.board = Board()
-        self.turn = WHITE
+        self.turn = BLACK
         #self.turn_counter = 0
         self.valid_moves = {}
         
@@ -52,16 +52,15 @@ class Game:
                 self.selected = None
                 self.select(row, col)
     
-        # Altrimenti, selezioniamo un'altra casella    
-        else:
-            piece = self.board.get_piece(row, col)
-            
-            # Se la casella contiene una pedina ed il suo colore è lo stesso del giocatore che deve muovere in questo turno, self.selected diventa quella stessa pedina
-            # e il dizionario delle mosse valide in base alla selezione, viene aggiornato 
-            if piece != 0 and piece.color == self.turn:
-                self.selected = piece
-                self.valid_moves = self.board.get_valid_moves()
-                return True # selezione valida
+        # Altrimenti, selezioniamo un'altra casella
+        piece = self.board.get_piece(row, col)
+        
+        # Se la casella contiene una pedina ed il suo colore è lo stesso del giocatore che deve muovere in questo turno, self.selected diventa quella stessa pedina
+        # e il dizionario delle mosse valide in base alla selezione, viene aggiornato 
+        if piece != 0 and piece.color == self.turn:
+            self.selected = piece
+            self.valid_moves = self.board.get_valid_moves(piece)
+            return True # selezione valida
     
         return False # selezione non valida
 
@@ -104,8 +103,8 @@ class Game:
         # self.turn_counter += 1
         
         self.valid_moves = {}
-        if self.turn == WHITE:
-            self.turn == BLACK
+        if self.turn == BLACK:
+            self.turn == WHITE
         
         else:
-            self.turn == WHITE
+            self.turn == BLACK

@@ -58,7 +58,7 @@ class Board:
         
         # Se la casella si trova nella prima o nell'ultima riga, diventa una dama
         if row == 0 or row == ROWS-1:
-            piece.make_kings()
+            piece.make_king()
             
             # Aggionrna i contatori di dame in base al colore della pedina
             if piece.color == WHITE:
@@ -166,8 +166,8 @@ class Board:
             moves.update(self._traverse_right(row-1, max(row-3, -1), -1, piece.color, right))
         
         if piece.color == WHITE or piece.king:
-            moves.update(self._traverse_left(row+1, max(row+3, ROWS), 1, piece.color, left))
-            moves.update(self._traverse_right(row+1, max(row+3, ROWS), 1, piece.color, right))
+            moves.update(self._traverse_left(row+1, min(row+3, ROWS), 1, piece.color, left))
+            moves.update(self._traverse_right(row+1, min(row+3, ROWS), 1, piece.color, right))
         
         
         return moves
