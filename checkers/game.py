@@ -104,7 +104,7 @@ class Game:
         
         self.valid_moves = {}
         if self.turn == BLACK:
-            self.turn == WHITE
+            self.turn = WHITE
         
         else:
-            self.turn == BLACK
+            self.turn = BLACK

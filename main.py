@@ -49,6 +49,7 @@ def main():
         
         if game.winner() != None:
             print(game.winner())
+            run = False
         
         # Event loop: viene eseguito x volte al secondo e controlla eventuali input, aggiorna il display ecc.
         for event in pygame.event.get(): # <- lista di eventi eseguiti dall'ultimo controllo
@@ -65,7 +66,7 @@ def main():
                 game.select(row, col)
                 
         
-        # Creazione della scacchiera
+        # Aggiornamento della scacchiera
         game.update()
         
     pygame.quit()
