@@ -58,7 +58,7 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
             
-            # Se viene premuto un pulsante del mouse, COMPLETARE
+            # Se viene premuto un pulsante del mouse, prendi le coordinate della casella cliccata
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse(pos)

@@ -169,7 +169,7 @@ class Board:
             moves.update(self._traverse_left(row+1, min(row+3, ROWS), 1, piece.color, left))
             moves.update(self._traverse_right(row+1, min(row+3, ROWS), 1, piece.color, right))
         
-        
+        #print(moves)
         return moves
 
     
@@ -189,6 +189,7 @@ class Board:
         last = []
         
         for r in range(start, stop, step):
+            # Se la colonna a sinistra è il bordo, non è possibile andare oltre
             if left < 0:
                 break
     
@@ -197,23 +198,23 @@ class Board:
             # Se è stata trovata una casella vuota
             if current == 0:
                 
-                # Se abbiamo saltato qualcosa, abbiamo trovato una casella vuota ma non abbiamo altro da saltare, non possiamo muoverci lì RIVEDERE SEZIONE CENTRALE VIDEO PARTE 3
+                # Se abbiamo mangiato qualcosa ma la casella successiva è libera, non c'è altro da mangiare in quella direzione
                 if skipped and not last:
                     break
                 
-                # Altrimenti, ci sono pedine che sono state saltate quindi stiamo creando una sorta di coda di pedine avversarie da mangiare e da rimuovere dal gioco
+                # Altrimenti, ci sono pedine che sono state mangiate quindi stiamo creando una sorta di coda di pedine avversarie da mangiare e da rimuovere dal gioco
                 elif skipped:
                     moves[(r, left)] = last + skipped
                 
-                # Altrimenti, l'ultima mossa individuata è valida quindi viene aggiunta al dizionario
+                # Altrimenti, non ci sono pedine da mangiare quindi l'ultima mossa individuata è valida quindi viene aggiunta al dizionario
                 else:
                     moves[(r, left)] = last
                 
                 
-                # Chiamata ricorsiva
+                # Se è possibile mangiare una pedina, effettua una chiamata ricorsiva per vedere se è possibile effettuare mangiate multiple
                 if last:
                     if step == -1:
-                        row = max(r-3, 0)
+                        row = max(r-3, -1)
                     else:
                         row = min(r+3, ROWS)
             
@@ -229,13 +230,14 @@ class Board:
             # Altrimenti, la pedina trovata è del colore opposto quindi ci si può muovere ASSUMENDO che la casella successiva è vuota
             else:
                 last = [current]
+                
 
             left -= 1
     
         return moves
     
     def _traverse_right(self, start, stop, step, color, right, skipped=[]):
-        """Controlla le mosse disponibili nella diagonale sinistra della pedina
+        """Controlla le mosse disponibili nella diagonale destra della pedina
 
         Args:
             start (int): prima riga a partire dalla quale cercare le mosse disponibili
@@ -274,10 +276,11 @@ class Board:
                 # Chiamata ricorsiva
                 if last:
                     if step == -1:
-                        row = max(r-3, 0)
+                        row = max(r-3, -1)
                     else:
                         row = min(r+3, ROWS)
-            
+
+                    
                     moves.update(self._traverse_left(r+step, row, step, color, right-1, skipped=last))
                     moves.update(self._traverse_right(r+step, row, step, color, right+1, skipped=last))
                 break
