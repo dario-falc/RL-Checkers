@@ -146,11 +146,29 @@ class Board:
         # - chiave: tupla di coordinate casella in cui ci si muove
         # - valore: lista di pedine (o caselle vuote) da scavalcare (e rimuovere) per arrivare nella casella indicata dalla chiave
         moves = {}
+        # Dizionario specifico per le mosse di cattura
+        capture_moves = {}
         
         # Coordinate delle mosse
         left = piece.col - 1
         right = piece.col + 1
         row = piece.row
+
+
+        # Verifica se ci sono catture possibili
+        if piece.color == BLACK or piece.king:
+            capture_moves.update(self._traverse_left(row-1, max(row-3, -1), -1, piece.color, left, skipped=[]))
+            capture_moves.update(self._traverse_right(row-1, max(row-3, -1), -1, piece.color, right, skipped=[]))
+        
+        if piece.color == WHITE or piece.king:
+            capture_moves.update(self._traverse_left(row+1, min(row+3, ROWS), 1, piece.color, left, skipped=[]))
+            capture_moves.update(self._traverse_right(row+1, min(row+3, ROWS), 1, piece.color, right, skipped=[]))
+
+        # Se ci sono catture, restituisci solo quelle (le catture sono obbligatorie)
+        if capture_moves:
+            return capture_moves
+
+
         
         # Queste condizioni controllano il movimento
         # Se la pedina è nera o è una dama, può muoversi verso l'alto
@@ -169,8 +187,15 @@ class Board:
             moves.update(self._traverse_left(row+1, min(row+3, ROWS), 1, piece.color, left))
             moves.update(self._traverse_right(row+1, min(row+3, ROWS), 1, piece.color, right))
         
+        if capture_moves:
+            print(f"Mandatory captures: {capture_moves}")
+            return capture_moves
+
         #print(moves)
         return moves
+    
+
+
 
     
     def _traverse_left(self, start, stop, step, color, left, skipped=[]):
@@ -296,4 +321,30 @@ class Board:
 
             right += 1
     
-        return moves    
+        return moves
+    
+
+
+    def get_all_valid_moves(self, color):
+        """
+        Calcola tutte le mosse valide per tutte le pedine di un determinato colore.
+        
+        Args:
+            color (tuple): Il colore delle pedine per cui calcolare le mosse valide.
+        
+        Returns:
+            dict: Un dizionario in cui la chiave è una tupla (riga, colonna) della pedina,
+                e il valore è un dizionario delle mosse valide per quella pedina.
+        """
+        all_moves = {}  # Dizionario che raccoglierà tutte le mosse valide
+
+        # Scorri tutta la scacchiera per trovare le pedine del colore specificato
+        for row in range(ROWS):
+            for col in range(COLS):
+                piece = self.get_piece(row, col)
+                if piece != 0 and piece.color == color:  # Se la pedina è del colore desiderato
+                    moves = self.get_valid_moves(piece)  # Calcola le mosse valide per questa pedina
+                    if moves:  # Aggiungi solo se ci sono mosse valide
+                        all_moves[(row, col)] = moves
+
+        return all_moves

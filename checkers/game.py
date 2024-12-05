@@ -51,16 +51,28 @@ class Game:
             if not result:
                 self.selected = None
                 self.select(row, col)
+            
+            return True
     
         # Altrimenti, selezioniamo un'altra casella
         piece = self.board.get_piece(row, col)
-        
-        # Se la casella contiene una pedina ed il suo colore è lo stesso del giocatore che deve muovere in questo turno, self.selected diventa quella stessa pedina
-        # e il dizionario delle mosse valide in base alla selezione, viene aggiornato 
+
+        # Controlla se il giocatore ha mosse obbligatorie (catture)
+        all_moves = self.board.get_all_valid_moves(self.turn)  # Usa il nuovo metodo
+        capture_moves = {pos: moves for pos, moves in all_moves.items() if any(moves.values())}
+
         if piece != 0 and piece.color == self.turn:
-            self.selected = piece
-            self.valid_moves = self.board.get_valid_moves(piece)
-            return True # selezione valida
+            if capture_moves:  # Esistono mosse obbligatorie?
+                if (row, col) in capture_moves:  # La pedina selezionata può fare una cattura
+                    self.selected = piece
+                    self.valid_moves = self.board.get_valid_moves(piece)
+                    return True
+                else:
+                    return False  # La pedina selezionata non è tra quelle con catture obbligatorie
+            else:
+                self.selected = piece
+                self.valid_moves = self.board.get_valid_moves(piece)
+                return True
     
         return False # selezione non valida
 
@@ -78,20 +90,31 @@ class Game:
 
         # Se la casella destinazione non contiene alcuna pedina e lo spostamento è effettivamente valido, allora sposta la pedina nella posizione desiderata        
         if self.selected and piece == 0 and (row, col) in self.valid_moves:
+            # Sposta la pedina nella nuova posizione
             self.board.move(self.selected, row, col)
-            skipped = self.valid_moves[(row, col)]
+            skipped = self.valid_moves[(row, col)]  # Pedine catturate
             
-            if skipped:
+            if skipped:  # Se ci sono catture
                 self.board.remove(skipped)
+                print(f"Cattura effettuata da {self.turn} - controllando ulteriori catture...")
 
-            self.change_turn()
+                # Controlla se sono disponibili ulteriori catture per la stessa pedina
+                self.valid_moves = self.board.get_valid_moves(self.selected)
+                if self.valid_moves:    # Se ci sono altre catture, il turno non cambia
+                    print("Ulteriori catture disponibili, il turno rimane allo stesso giocatore.")
+                    return True # Il turno rimane allo stesso giocatore
+
+
+            # Nessuna ulteriore cattura, passa il turno
+            print("Nessuna cattura disponibile, turno passa all'avversario.")
+            self.change_turn()  # Cambia turno solo se non ci sono più catture
         
         else:
             return False
         
         return True
     
-    
+    # tale funzione prevede di disegnare all'interno della cella un punto blu per tutte le mosse che può compiere
     def draw_valid_moves(self, moves):
         for move in moves:
             row, col = move
@@ -101,10 +124,6 @@ class Game:
     
     def change_turn(self):
         # self.turn_counter += 1
-        
-        self.valid_moves = {}
-        if self.turn == BLACK:
-            self.turn = WHITE
-        
-        else:
-            self.turn = BLACK
+        self.valid_moves = {}  # Azzeriamo le mosse valide
+        self.selected = None  # Deselezioniamo qualsiasi pedina
+        self.turn = WHITE if self.turn == BLACK else BLACK  # Cambiamo il turno
