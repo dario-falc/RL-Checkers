@@ -146,28 +146,12 @@ class Board:
         # - chiave: tupla di coordinate casella in cui ci si muove
         # - valore: lista di pedine (o caselle vuote) da scavalcare (e rimuovere) per arrivare nella casella indicata dalla chiave
         moves = {}
-        # Dizionario specifico per le mosse di cattura
-        capture_moves = {}
+       
         
         # Coordinate delle mosse
         left = piece.col - 1
         right = piece.col + 1
         row = piece.row
-
-
-        # Verifica se ci sono catture possibili
-        if piece.color == BLACK or piece.king:
-            capture_moves.update(self._traverse_left(row-1, max(row-3, -1), -1, piece.color, left, skipped=[]))
-            capture_moves.update(self._traverse_right(row-1, max(row-3, -1), -1, piece.color, right, skipped=[]))
-        
-        if piece.color == WHITE or piece.king:
-            capture_moves.update(self._traverse_left(row+1, min(row+3, ROWS), 1, piece.color, left, skipped=[]))
-            capture_moves.update(self._traverse_right(row+1, min(row+3, ROWS), 1, piece.color, right, skipped=[]))
-
-        # Se ci sono catture, restituisci solo quelle (le catture sono obbligatorie)
-        if capture_moves:
-            return capture_moves
-
 
         
         # Queste condizioni controllano il movimento
@@ -187,17 +171,14 @@ class Board:
             moves.update(self._traverse_left(row+1, min(row+3, ROWS), 1, piece.color, left))
             moves.update(self._traverse_right(row+1, min(row+3, ROWS), 1, piece.color, right))
         
-        if capture_moves:
-            print(f"Mandatory captures: {capture_moves}")
-            return capture_moves
+        #if capture_moves:
+        #    print(f"Mandatory captures: {capture_moves}")
+        #    return capture_moves
 
         #print(moves)
         return moves
     
 
-
-
-    
     def _traverse_left(self, start, stop, step, color, left, skipped=[]):
         """Controlla le mosse disponibili nella diagonale sinistra della pedina
 
@@ -223,11 +204,11 @@ class Board:
             # Se è stata trovata una casella vuota
             if current == 0:
                 
-                # Se abbiamo mangiato qualcosa ma la casella successiva è libera, non c'è altro da mangiare in quella direzione
+                # Se abbiamo mangiato qualcosa ma la casella successiva è vuota, non c'è altro da mangiare in quella direzione
                 if skipped and not last:
                     break
                 
-                # Altrimenti, ci sono pedine che sono state mangiate quindi stiamo creando una sorta di coda di pedine avversarie da mangiare e da rimuovere dal gioco
+                # Altrimenti, ci sono pedine che sono state mangiate quindi aggiungiamo la pedina alla lista di pedine da mangiare e da rimuovere dal gioco
                 elif skipped:
                     moves[(r, left)] = last + skipped
                 

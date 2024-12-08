@@ -85,7 +85,7 @@ class Game:
             col (Int): colonna in cui spostare la pedina
         """
 
-        # In questo momento, self.selected è la pedina da spostare, mentre piece sarebbe la casella in cui spostarla
+        #self.selected è la pedina da spostare, mentre piece sarebbe la casella in cui spostarla
         piece = self.board.get_piece(row, col)
 
         # Se la casella destinazione non contiene alcuna pedina e lo spostamento è effettivamente valido, allora sposta la pedina nella posizione desiderata        
@@ -96,17 +96,7 @@ class Game:
             
             if skipped:  # Se ci sono catture
                 self.board.remove(skipped)
-                print(f"Cattura effettuata da {self.turn} - controllando ulteriori catture...")
-
-                # Controlla se sono disponibili ulteriori catture per la stessa pedina
-                self.valid_moves = self.board.get_valid_moves(self.selected)
-                if self.valid_moves:    # Se ci sono altre catture, il turno non cambia
-                    print("Ulteriori catture disponibili, il turno rimane allo stesso giocatore.")
-                    return True # Il turno rimane allo stesso giocatore
-
-
-            # Nessuna ulteriore cattura, passa il turno
-            print("Nessuna cattura disponibile, turno passa all'avversario.")
+                
             self.change_turn()  # Cambia turno solo se non ci sono più catture
         
         else:
