@@ -140,13 +140,11 @@ class Board:
         return None 
 
 
-
     def get_valid_moves(self, piece):
         # Dizionario contenente le mosse ammissibili:
         # - chiave: tupla di coordinate casella in cui ci si muove
         # - valore: lista di pedine (o caselle vuote) da scavalcare (e rimuovere) per arrivare nella casella indicata dalla chiave
         moves = {}
-       
         
         # Coordinate delle mosse
         left = piece.col - 1
@@ -164,18 +162,32 @@ class Board:
         # - step: -1 per muoversi in alto
         #  
         if piece.color == BLACK or piece.king:
-            moves.update(self._traverse_left(row-1, max(row-3, -1), -1, piece.color, left))
-            moves.update(self._traverse_right(row-1, max(row-3, -1), -1, piece.color, right))
+            left_moves_dict = self._traverse_left(row-1, max(row-3, -1), -1, piece.color, left)
+            right_moves_dict = self._traverse_right(row-1, max(row-3, -1), -1, piece.color, right)
+            
+            # Controlla la diagonale sinistra.
+            for value in left_moves_dict.values():
+                # Se ci sono catture, vengono aggiunte alla lista di mosse
+                if value:
+                    moves.update(left_moves_dict)
+            
+            # Controlla la diagonale destra.
+            for value in right_moves_dict.values():
+                # Se ci sono catture, vengono aggiunte alla lista di mosse
+                if value:
+                    moves.update(right_moves_dict)
+            
+            if not moves:
+                moves.update(left_moves_dict)
+                moves.update(right_moves_dict)
+            
         
         if piece.color == WHITE or piece.king:
             moves.update(self._traverse_left(row+1, min(row+3, ROWS), 1, piece.color, left))
             moves.update(self._traverse_right(row+1, min(row+3, ROWS), 1, piece.color, right))
         
-        #if capture_moves:
-        #    print(f"Mandatory captures: {capture_moves}")
-        #    return capture_moves
-
-        #print(moves)
+      
+        print(moves)
         return moves
     
 
@@ -242,6 +254,7 @@ class Board:
     
         return moves
     
+    
     def _traverse_right(self, start, stop, step, color, right, skipped=[]):
         """Controlla le mosse disponibili nella diagonale destra della pedina
 
@@ -305,27 +318,3 @@ class Board:
         return moves
     
 
-
-    def get_all_valid_moves(self, color):
-        """
-        Calcola tutte le mosse valide per tutte le pedine di un determinato colore.
-        
-        Args:
-            color (tuple): Il colore delle pedine per cui calcolare le mosse valide.
-        
-        Returns:
-            dict: Un dizionario in cui la chiave è una tupla (riga, colonna) della pedina,
-                e il valore è un dizionario delle mosse valide per quella pedina.
-        """
-        all_moves = {}  # Dizionario che raccoglierà tutte le mosse valide
-
-        # Scorri tutta la scacchiera per trovare le pedine del colore specificato
-        for row in range(ROWS):
-            for col in range(COLS):
-                piece = self.get_piece(row, col)
-                if piece != 0 and piece.color == color:  # Se la pedina è del colore desiderato
-                    moves = self.get_valid_moves(piece)  # Calcola le mosse valide per questa pedina
-                    if moves:  # Aggiungi solo se ci sono mosse valide
-                        all_moves[(row, col)] = moves
-
-        return all_moves

@@ -43,7 +43,7 @@ class Game:
         """
         
         # Se qualche oggetto è stato selezionato
-        if self.selected:
+        if self.selected and self.selected.captures == True:
             # Proviamo a muoverlo nella casella selezionata
             result = self._move(row, col)
             
@@ -51,28 +51,14 @@ class Game:
             if not result:
                 self.selected = None
                 self.select(row, col)
-            
-            return True
     
         # Altrimenti, selezioniamo un'altra casella
         piece = self.board.get_piece(row, col)
 
-        # Controlla se il giocatore ha mosse obbligatorie (catture)
-        all_moves = self.board.get_all_valid_moves(self.turn)  # Usa il nuovo metodo
-        capture_moves = {pos: moves for pos, moves in all_moves.items() if any(moves.values())}
-
         if piece != 0 and piece.color == self.turn:
-            if capture_moves:  # Esistono mosse obbligatorie?
-                if (row, col) in capture_moves:  # La pedina selezionata può fare una cattura
-                    self.selected = piece
-                    self.valid_moves = self.board.get_valid_moves(piece)
-                    return True
-                else:
-                    return False  # La pedina selezionata non è tra quelle con catture obbligatorie
-            else:
-                self.selected = piece
-                self.valid_moves = self.board.get_valid_moves(piece)
-                return True
+            self.selected = piece
+            self.valid_moves = self.board.get_valid_moves(piece)
+            return True
     
         return False # selezione non valida
 
