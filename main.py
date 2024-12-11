@@ -16,7 +16,7 @@ pygame.display.set_caption("Checkers")
 
 
 def get_row_col_from_mouse(pos):
-    """In base alla posizione attuale del puntatore, restituisce le coordinate (row,col) della casella in cui si trova
+    """In base alla posizione attuale del puntatore, restituisce le coordinate (row,col) della casella corrispondente
 
     Args:
         pos (Tuple[int, int]): tupla contenente le coordinate x e y del puntatore
@@ -32,6 +32,8 @@ def get_row_col_from_mouse(pos):
 
 # Funzione principale per l'esecuzione del gioco
 def main():
+    """Funzione principale per l'esecuzione del gioco
+    """
     run = True
     
     # clock: controlla la velocità dell'event loop (per evitare, ad esempio, che venga eseguito troppo velocemente)
@@ -44,6 +46,7 @@ def main():
     while run:
         clock.tick(FPS)
         
+        # Se c'è un vincitore, la partita finisce
         if game.winner() != None:
             print(game.winner())
             run = False
@@ -55,7 +58,7 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
             
-            # Se viene premuto un pulsante del mouse, prendi le coordinate della casella cliccata
+            # Se viene premuto un pulsante del mouse, prendi le coordinate della casella cliccata e verifica il suo contenuto
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse(pos)

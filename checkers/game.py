@@ -11,6 +11,9 @@ class Game:
         
         
     def update(self):
+        """
+        Aggiorna la scacchiera e la sua rappresentazione interna e la disegna a schermo
+        """
         self.board.draw(self.win)
         self.draw_valid_moves(self.valid_moves)
         pygame.display.update()
@@ -33,65 +36,92 @@ class Game:
     
     
     def select(self, row, col):
-        """Sulla base dell'oggetto selezionato e dello stato del gioco, fa qualcosa di diverso:
-        - se self.selected non è vuoto, allora qualcosa è stato selezionato, quindi la selezione viene resettata in modo da poter selezionare qualcos'altro
-        - se self.selected è vuoto, allora la selezione deve ancora avvenire, quindi, una volta selezionata una pedina, si aggiorna self.selected ed il dizionario delle mosse valide
+        """
+        Sulla base dell'oggetto selezionato e dello stato del gioco, fa qualcosa di diverso.
 
         Args:
-            row (Int): riga dell'oggetto selezionato
-            col (Int): colonna dell'oggetto selezionato
+            row (Int): riga della casella selezionata
+            col (Int): colonna della casella selezionata
         """
         
-        # Se qualche oggetto è stato selezionato
-        if self.selected and self.selected.captures == True:
-            # Proviamo a muoverlo nella casella selezionata
+        # Se una pedina risulta precedentemente selezionata
+        if self.selected:
+            # Si prova a muovaerla nella casella appena selezionata
             result = self._move(row, col)
             
-            # Se non ci riusciamo, resettiamo la selezione e selezioniamo qualcos'altro chiamando nuovamente select() (ma questa volta, self.selected è uguale a None)
+            # Se questo non è possibile, la selezione viene resettata e la funzione viene chiamata nuovamente (con la differenza che questa volta, self.selected è uguale a None)
             if not result:
                 self.selected = None
                 self.select(row, col)
     
-        # Altrimenti, selezioniamo un'altra casella
+        # Altrimenti, salviamo il contenuto della casella appena cliccata
         piece = self.board.get_piece(row, col)
 
+        # Calcolo di tutte le mosse disponibili per il giocatore
+        player_moves = self.board.get_valid_moves_player(self.turn)
+
+        # Filtra tutte le mosse che prevedono catture
+        capture_moves = {pos: moves for pos, moves in player_moves.items() if any(moves.values())}
+
         if piece != 0 and piece.color == self.turn:
-            self.selected = piece
-            self.valid_moves = self.board.get_valid_moves(piece)
-            return True
+            # Se esistono catture obbligatorie
+            if capture_moves:
+                # E se la pedina selezionata è una delle pedine che catturano, allora è l'unica a cui è concesso muoversi
+                if (row, col) in capture_moves.keys():
+                    self.selected = piece
+                    self.valid_moves = self.board.get_valid_moves_piece(piece)
+                    return True
+                else:
+                    return False
+            # Altrimenti, non esistono catture obbligatorie, quindi il giocatore può scegliere liberamente quale mossa giocare
+            else:
+                # Quindi si vanno a ricalcolare le mosse per la pedina selezionata
+                self.selected = piece
+                self.valid_moves = self.board.get_valid_moves_piece(piece)
+                return True
     
-        return False # selezione non valida
+        return False
 
 
     def _move(self, row, col):
-        """Sposta la pedina selezionata nella posizione desiderata
+        """
+        Sposta la pedina selezionata nella posizione desiderata
 
         Args:
-            row (Inte): riga in cui spostare la pedina
+            row (Int): riga in cui spostare la pedina
             col (Int): colonna in cui spostare la pedina
         """
 
         #self.selected è la pedina da spostare, mentre piece sarebbe la casella in cui spostarla
         piece = self.board.get_piece(row, col)
 
-        # Se la casella destinazione non contiene alcuna pedina e lo spostamento è effettivamente valido, allora sposta la pedina nella posizione desiderata        
+        # Se la casella destinazione è vuota e lo spostamento è effettivamente valido
         if self.selected and piece == 0 and (row, col) in self.valid_moves:
-            # Sposta la pedina nella nuova posizione
+            # Allora sposta la pedina nella nuova posizione
             self.board.move(self.selected, row, col)
-            skipped = self.valid_moves[(row, col)]  # Pedine catturate
+            skipped = self.valid_moves[(row, col)]
             
-            if skipped:  # Se ci sono catture
+            # Se ci sono pedine catturate, le pedine vengono rimosse dal gioco
+            if skipped:
                 self.board.remove(skipped)
-                
-            self.change_turn()  # Cambia turno solo se non ci sono più catture
+            
+            # Il turno passa all'altro giocatore
+            self.change_turn()
         
         else:
             return False
         
         return True
     
-    # tale funzione prevede di disegnare all'interno della cella un punto blu per tutte le mosse che può compiere
+    
     def draw_valid_moves(self, moves):
+        """
+        Disegna un marcatore per tutte le mosse ammissibili
+
+        Args:
+            moves (Dict): dizionario di mosse disponibili in cui la chiave è una tupla contenente le coordinate (row, col) della casella destinazione,
+            mentre il valore è una lista delle eventuali pedine mangiate sul percorso
+        """
         for move in moves:
             row, col = move
             pygame.draw.circle(self.win, BLUE, (col * SQUARE_SIZE + SQUARE_SIZE//2, row * SQUARE_SIZE + SQUARE_SIZE//2), 15)
@@ -99,7 +129,10 @@ class Game:
     
     
     def change_turn(self):
+        """
+        Passa il turno all'altro giocatore, svuotando il dizionario di mosse possibili e resettando le selezioni
+        """
         # self.turn_counter += 1
-        self.valid_moves = {}  # Azzeriamo le mosse valide
-        self.selected = None  # Deselezioniamo qualsiasi pedina
-        self.turn = WHITE if self.turn == BLACK else BLACK  # Cambiamo il turno
+        self.valid_moves = {}
+        self.selected = None
+        self.turn = WHITE if self.turn == BLACK else BLACK

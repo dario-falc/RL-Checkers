@@ -2,10 +2,10 @@ import pygame
 from .constants import WHITE, BLACK, GREY, SQUARE_SIZE, CROWN
 
 class Piece:
-    # Distanza tra la pedina ed i bordi della casella in cui si trova
+    # PADDING: distanza tra la pedina ed i bordi della casella in cui si trova
     PADDING = 15
     
-    # Contorno della pedina per renderla visibile
+    # OUTLINE: contorno della pedina per renderla visibile
     OUTLINE = 2
     
     def __init__(self, row, col, color):
@@ -21,20 +21,23 @@ class Piece:
     
     
     def calc_pos(self):
-        """Calcola le coordinate (x,y) nella finestra in base alla riga e alla colonna della scacchiera in cui la pedina si trova
+        """
+        Calcola le coordinate (x,y) nella finestra in base alla riga e alla colonna della scacchiera in cui la pedina si trova
         """
         self.x = SQUARE_SIZE * self.col + SQUARE_SIZE//2    # <- //2 per posizionare la pedina al centro della casella
         self.y = SQUARE_SIZE * self.row + SQUARE_SIZE//2
     
     
     def make_king(self):
-        """Rende la pedina una dama
+        """
+        Rende la pedina una dama
         """
         self.king = True
     
     
     def draw(self, win):
-        """Disegna la pedina
+        """
+        Disegna la pedina
 
         Args:
             win (Surface): finestra di gioco
@@ -43,18 +46,20 @@ class Piece:
         # Raggio della pedina: dal centro al bordo della casella, meno il padding scelto
         radius = SQUARE_SIZE//2 - self.PADDING
         
-        # Contorno
+        # Contorno della pedina
         pygame.draw.circle(win, GREY, (self.x, self.y), radius + self.OUTLINE)
+        
         # Pedina
         pygame.draw.circle(win, self.color, (self.x, self.y), radius)
         
-        # Se la pedina è una dama, aggiungi a schermo la corona nella rispettiva posizione
+        # Se la pedina è una dama, aggiungi a schermo una corona nella rispettiva posizione
         if self.king:
             win.blit(CROWN, (self.x - CROWN.get_width()//2, self.y - CROWN.get_height()//2))
     
     
     def move(self, row, col):
-        """Sposta la pedina
+        """
+        Sposta la pedina
 
         Args:
             row (Int): riga in cui spostare la pedina
@@ -65,7 +70,6 @@ class Piece:
         
         # Aggiornamento delle coordinate x e y della pedina
         self.calc_pos()
-    
     
     
     def __repr__(self):
