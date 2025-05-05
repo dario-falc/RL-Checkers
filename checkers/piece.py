@@ -73,4 +73,11 @@ class Piece:
     
     
     def __repr__(self):
-        return str(self.color)
+        #restituisce "W" se la pedina è bianca, "B" se nera
+        if self.color == WHITE:
+            #return "\033[41m W \033[0m"
+            return "W"
+        elif self.color == BLACK:
+            #return "\033[42m B \033[0m"
+            return "B"
+

@@ -22,6 +22,11 @@ class Board:
         # Rappresentazione interna della scacchiera
         self.create_board()
     
+    def __str__(self):
+        print("Scacchiera:")
+        for row in self.board:
+            print(row)
+        return ""
     
     def draw_squares(self, win):
         """
@@ -93,13 +98,13 @@ class Board:
                 # - sulle righe di indice pari, la pedina viene disegnata nelle colonne di indice dispari
                 # - sulle righe di indice dispari, la pedina viene disegnata nelle colonne di indice pari
                 if col % 2 == ((row + 1) % 2):
-                    # Nelle prime tre righe vengono disegnate le pedine bianche
+                    # Nelle prime tre righe (in alto) vengono disegnate le pedine nere
                     if row < 3:
-                        self.board[row].append(Piece(row, col, WHITE))
-                    
-                    # Nelle ultime tre righe, vengono disegnate le pedine nere
-                    elif row > 4:
                         self.board[row].append(Piece(row, col, BLACK))
+                    
+                    # Nelle ultime tre righe (in basso), vengono disegnate le pedine bianche
+                    elif row > 4:
+                        self.board[row].append(Piece(row, col, WHITE))
                     
                     # Nelle righe centrali, non disegniamo pedine ma aggiungiamo uno 0 nella rappresentazione interna della scacchiera
                     else:
@@ -147,9 +152,9 @@ class Board:
         Se le pedine di un giocatore finiscono, la partita termina
         """
         if self.black_left <= 0:
-            return "Winner: WHITE"
+            return WHITE
         elif self.white_left <= 0:
-            return "Winner: BLACK"
+            return BLACK
         
         return None 
 
@@ -168,6 +173,7 @@ class Board:
         
         # Dizionario di mosse valide per il giocatore di turno
         player_moves = {}
+        capture_moves_exists = False
 
         # Calcolo delle mosse
         for row in range(ROWS):
@@ -178,9 +184,19 @@ class Board:
                     moves = self.get_valid_moves_piece(piece)
                     if moves:
                         player_moves[(row, col)] = moves
+                        # Se per questa pedina esiste almeno una mossa di cattura, segnala la presenza di mosse obbligatorie
+                        if any(moves[dest] for dest in moves):
+                            capture_moves_exists = True
 
-        #print(player_moves)
-        return player_moves
+        if capture_moves_exists:
+            filtered_moves = {}
+            for pos, moves in player_moves.items():
+                capture_moves = {dest: skipped for dest, skipped in moves.items() if skipped}
+                if capture_moves:
+                    filtered_moves[pos] = capture_moves
+            return (filtered_moves, capture_moves_exists)
+
+        return (player_moves, capture_moves_exists)
     
 
     def get_valid_moves_piece(self, piece):
@@ -197,21 +213,20 @@ class Board:
 
         moves = {}
         
-        
         # Coordinate a partire dalle quali cercare delle mosse
         left = piece.col - 1
         right = piece.col + 1
         row = piece.row
 
         # A seconda del colore della pedina oppure se è una dama, si cercano le mosse disponibili  
-        if piece.color == BLACK or piece.king:
+        if piece.color == WHITE or piece.king:
             left_moves_dict = self._traverse_left(row-1, max(row-3, -1), -1, piece.color, left)
             right_moves_dict = self._traverse_right(row-1, max(row-3, -1), -1, piece.color, right)
             
             moves.update(self._get_valid_moves(left_moves_dict, right_moves_dict))
             
         
-        if piece.color == WHITE or piece.king:
+        if piece.color == BLACK or piece.king:
             left_moves_dict = self._traverse_left(row+1, min(row+3, ROWS), 1, piece.color, left)
             right_moves_dict = self._traverse_right(row+1, min(row+3, ROWS), 1, piece.color, right)
             
@@ -233,7 +248,7 @@ class Board:
             mentre il valore è una lista delle eventuali pedine mangiate sul percorso
         """
         moves = {}
-        to_return = {}
+        valid_moves = {}
         
         # max_length_capture: tiene traccia della cattura più lunga, in modo che se c'è una cattura multipla, la rende obbligatoria e impedisce di non catturare tutte le pedine
         max_length_capture = None
@@ -243,7 +258,7 @@ class Board:
             # Se ci sono catture, vengono aggiunte alla lista di mosse
             if move:
                 moves.update(left_moves_dict)
-                if max_length_capture == None or max_length_capture < len(move):
+                if max_length_capture is None or max_length_capture < len(move):
                     max_length_capture = len(move)
         
         # Controlla la diagonale destra.
@@ -251,7 +266,7 @@ class Board:
             # Se ci sono catture, vengono aggiunte alla lista di mosse
             if move:
                 moves.update(right_moves_dict)
-                if max_length_capture == None or max_length_capture < len(move):
+                if max_length_capture is None or max_length_capture < len(move):
                     max_length_capture = len(move)
         
         # Se non ci sono catture possibili, tutte le altre mosse sono ammesse
@@ -259,14 +274,15 @@ class Board:
             moves.update(left_moves_dict)
             moves.update(right_moves_dict)
         
-        to_return = moves.copy()
+        valid_moves = moves.copy()
         
         # Se ci sono catture e se sono di lunghezze diverse, scarta tutte ad eccezione delle più lunghe
-        for key, move in moves.items():
-            if max_length_capture and len(move) < max_length_capture:
-                to_return.pop(key)
+        if max_length_capture:
+            for key, move in moves.items():
+                if len(move) < max_length_capture:
+                    valid_moves.pop(key)
                 
-        return to_return
+        return valid_moves
         
     
 

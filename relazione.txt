@@ -1,0 +1,199 @@
+### 2. Relazione Completa sul Progetto
+
+#### Introduzione
+
+Il progetto **RL-Checkers** è un'implementazione del gioco della dama che integra sia una modalità interattiva per giocatori umani sia una modalità in cui un agente AI, basato su Q-learning, gioca contro un umano. Il progetto è realizzato in Python ed è strutturato in maniera modulare per separare la logica di gioco dalla parte di intelligenza artificiale.
+
+---
+
+#### Struttura del Progetto
+
+**1. Cartella `checkers/`**  
+Contiene tutto ciò che riguarda la logica e la rappresentazione del gioco:
+- **`constants.py`**:  
+  - Definisce le dimensioni della finestra (WIDTH, HEIGHT), il numero di righe e colonne della scacchiera, e altre costanti grafiche (colori, dimensioni delle caselle).
+  - Include la gestione delle immagini, ad esempio la riscalatura dell’icona della corona (CROWN) utilizzata per rappresentare una dama.
+  
+- **`piece.py`**:  
+  - Implementa la classe `Piece` che rappresenta una singola pedina.
+  - Gestisce il movimento, il calcolo della posizione sullo schermo e la trasformazione in dama (`make_king()`).
+  - Il metodo `draw()` si occupa di disegnare la pedina (e la corona, se è una dama) sulla finestra.
+
+- **`board.py`**:  
+  - Gestisce la scacchiera, rappresentata internamente come una matrice 8x8.
+  - Il metodo `create_board()` inizializza la scacchiera posizionando le pedine nei punti corretti.
+  - I metodi `move()` e `remove()` aggiornano lo stato della scacchiera durante il gioco.
+  - **Logica delle mosse obbligatorie**:  
+    - Implementata in `get_valid_moves_player()`, che raccoglie le mosse valide per ciascuna pedina e filtra quelle non di cattura se esistono catture obbligatorie.
+    - I metodi `_traverse_left()` e `_traverse_right()` sono usati per calcolare le mosse in diagonale, verificando la presenza di pedine nemiche e la possibilità di cattura.
+
+- **`game.py`**:  
+  - Coordina l’intero flusso di gioco.
+  - Gestisce i turni, le selezioni delle pedine e il passaggio di turno attraverso i metodi `select()`, `_move()`, e `change_turn()`.
+  - Verifica la condizione di vittoria attraverso il metodo `winner()`.
+  - Il metodo `update()` aggiorna la visualizzazione della scacchiera e delle pedine.
+
+**2. Cartella `gym/`**  
+Contiene la parte relativa all’intelligenza artificiale e al reinforcement learning:
+- **`CheckersEnv.py`**:  
+  - Definisce l'ambiente per il gioco della dama, seguendo il paradigma degli ambienti usati nel reinforcement learning.
+  - Il metodo `step(action)` gestisce l'esecuzione di una mossa data un'azione codificata, aggiornando lo stato del gioco e assegnando un reward basato sull'esito (vittoria, sconfitta o gioco in corso).
+  - `get_state()` trasforma lo stato corrente della scacchiera in una tupla hashabile, utile per indicizzare la Q-table.
+  
+- **`QLearningAgent.py`**:  
+  - Implementa l’agente basato su Q-learning.
+  - Memorizza i valori Q in un dizionario, mappando (stato, azione) al relativo Q-value.
+  - Il metodo `choose_action(state)` implementa l’epsilon-greedy strategy per bilanciare esplorazione ed esploitazione.
+  - `learn(state, action, reward, next_state)` aggiorna il Q-value basato sulla ricompensa ricevuta.
+  - Funzioni `save_q_table()` e `load_q_table()` permettono il salvataggio e il caricamento della Q-table.
+
+- **`train.py`**:  
+  - Esegue il processo di training dell’agente attraverso numerosi episodi.
+  - Durante ogni episodio, l’agente esegue mosse e aggiorna la Q-table in base alle ricompense ottenute.
+  - Alla fine del training, la Q-table viene salvata su disco in `q_table.pkl`.
+
+**3. Script di Avvio**
+
+- **`main.py`**:  
+  - Avvia il gioco in modalità umano vs. umano.
+  - Utilizza la logica definita in `checkers/` per gestire l’interfaccia grafica e il flusso del gioco.
+
+- **`play_vs_agent.py`**:  
+  - Permette al giocatore umano di sfidare l’agente AI.
+  - Durante il turno dell’agente, il file estrae le mosse valide utilizzando la logica centralizzata in `board.py`, e stampa in console i Q-value per ciascuna mossa per rendere trasparente il processo decisionale.
+  - L’agente sceglie la mossa con il Q-value massimo, dando la priorità alle mosse di cattura se presenti (grazie alla logica implementata in `board.py`).
+
+**4. Altri File**
+
+- **`q_table.pkl`**:  
+  - File binario che contiene la Q-table addestrata, essenziale per la modalità di gioco contro l’AI.
+  
+- **`requirements.txt`** e **`.gitattributes`**:  
+  - File di supporto per la gestione delle dipendenze e la configurazione del repository Git.
+
+---
+
+#### Logica e Decisioni di Progetto
+
+- **Modularità**:  
+  La separazione in moduli (`checkers/` e `gym/`) permette di isolare la logica di gioco dalla parte di intelligenza artificiale, rendendo il codice più manutenibile ed estendibile.
+
+- **Implementazione delle Regole della Dama**:  
+  La gestione delle mosse (incluse quelle obbligatorie per la cattura) è centralizzata in `board.py`, garantendo coerenza e semplificando la logica in altri file (come `play_vs_agent.py`).
+
+- **Processo Decisionale dell’Agente**:  
+  L’agente utilizza Q-learning, bilanciando esplorazione ed sfruttamento mediante una strategia epsilon-greedy. I Q-value vengono stampati in console per facilitare il debugging e l’analisi del processo decisionale.
+
+- **Codifica delle Azioni**:  
+  Le azioni sono codificate in un intero combinando le coordinate di partenza e arrivo. Questa scelta semplifica la gestione degli stati nella Q-table.
+
+- **Efficienza**:  
+  - La rappresentazione dello stato della scacchiera come tupla (hashabile) permette aggiornamenti rapidi della Q-table.
+  - L'algoritmo per la ricerca delle mosse valide, sebbene ricorsivo per la gestione delle catture multiple, è ottimizzato per le dimensioni ridotte della scacchiera (8x8).
+
+- **Espandibilità**:  
+  Grazie alla struttura modulare, è possibile estendere facilmente il progetto (ad esempio, aggiungendo nuove strategie di AI o migliorando l'interfaccia grafica).
+
+---
+
+#### Considerazioni Finali
+
+Il progetto **RL-Checkers** è stato progettato con l'obiettivo di unire la tradizionale esperienza di gioco della dama con le tecniche moderne di intelligenza artificiale. Le scelte progettuali, dalla struttura modulare alla centralizzazione delle regole di gioco, permettono di mantenere il codice pulito, efficiente e facilmente estendibile. L'approccio di visualizzare il processo decisionale dell'agente offre inoltre un utile strumento per il debug e l'analisi del comportamento dell'AI.
+
+Questa relazione fornisce una panoramica completa del funzionamento interno del progetto, analizzando le decisioni chiave e l'architettura complessiva. Ogni classe e metodo è stato progettato per contribuire in maniera integrata alla simulazione del gioco della dama e all'apprendimento automatico dell'agente, creando un ambiente di gioco interattivo e intelligente.
+
+📘 Descrizione dettagliata dei file
+🎮 main.py
+Scopo: avvia una partita tra due giocatori umani, con interfaccia grafica.
+
+Usa pygame per disegnare la scacchiera, gestire input da mouse, e aggiornare lo stato della partita.
+
+Invia clic a Game.select() per selezionare pedine e muoverle.
+
+🧠 play_vs_agent.py
+Scopo: permette a un giocatore umano di giocare contro l'agente Q-Learning.
+
+L’agente usa la Q-table pre-addestrata per scegliere le mosse.
+
+Durante il suo turno, stampa in console tutte le mosse valide, i relativi Q-value, e quale mossa sceglie.
+
+Usa la logica da board.py per determinare solo le mosse ammissibili (inclusi i salti obbligatori).
+
+Input umano gestito da pygame.
+
+🧩 train.py
+Scopo: addestra l'agente Q-Learning usando CheckersEnv.
+
+Gestisce episodi, esplorazione vs sfruttamento, salvataggio della Q-table.
+
+Usa env.step(action) per simulare mosse e apprendimento.
+
+🧱 MODULO checkers/
+📄 constants.py
+Contiene le costanti come colori, dimensioni delle caselle e della finestra, numero di righe/colonne.
+
+📄 board.py
+Cuore della logica delle mosse.
+
+Tiene traccia dello stato della scacchiera.
+
+Calcola le mosse valide per ogni pedina.
+
+Contiene anche la logica per i salti obbligatori.
+
+Espone il metodo get_valid_moves_player(color) per ottenere solo le mosse valide per un giocatore.
+
+📄 piece.py
+Rappresenta una singola pedina.
+
+Tiene traccia del colore, posizione e se è una dama.
+
+Supporta promozione e disegno sullo schermo.
+
+📄 game.py
+Coordina la partita e l’interazione tra giocatore, pedine e scacchiera.
+
+Gestisce i turni, la selezione, e il movimento di pedine.
+
+Fornisce metodi come select(row, col) e winner().
+
+🧠 MODULO gym/
+📄 CheckersEnv.py
+Ambiente che simula il gioco come un ambiente di reinforcement learning.
+
+Definisce:
+
+get_state() → stato attuale.
+
+step(action) → applica una mossa e restituisce next_state, reward, done.
+
+reset() → riavvia la partita.
+
+📄 QLearningAgent.py
+Agente basato su Q-Learning.
+
+Tiene una Q-table (dizionario stato-azione → valore).
+
+Fornisce:
+
+choose_action(state) → sceglie mossa basata su ε-greedy.
+
+learn(state, action, reward, next_state) → aggiorna la Q-table.
+
+get_valid_actions(state) → estrae solo mosse valide con board.py.
+
+get_q(state, action) → restituisce Q-value.
+
+📦 q_table.pkl
+File serializzato con la Q-table salvata dopo l’addestramento.
+
+Usato da play_vs_agent.py per far giocare l’agente.
+
+🔁 Integrazione tra i componenti
+board.py fornisce le mosse valide sia per il gioco umano che per l’agente.
+
+Game aggiorna e mostra lo stato, e gestisce l'interazione utente.
+
+QLearningAgent usa get_valid_actions() e get_q() per esplorare lo spazio delle mosse.
+
+CheckersEnv collega Game e l'agente per addestramento automatico.

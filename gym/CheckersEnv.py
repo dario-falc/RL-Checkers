@@ -1,102 +1,93 @@
-import gymnasium as gym
-from gymnasium import spaces
 import numpy as np
-import random
 from checkers.game import Game
-from checkers.constants import BLACK, WHITE, SQUARE_SIZE
+from checkers.piece import Piece
+from checkers.constants import BLACK, WHITE
 
-class CheckersEnv(gym.Env):
+class CheckersEnv:
     def __init__(self):
-        super(CheckersEnv, self).__init__()
-        self.game = Game(None)  # Inizializza il gioco senza una finestra grafica
-        self.turn = BLACK  # Inizia il gioco con il giocatore nero
-        
-        # Spazi di azione
-        self.action_space = spaces.Discrete(64 * 64)  # Ogni mossa è una coppia di caselle (da_row, da_col, a_row, a_col)
-        
-        # Spazio di osservazione (rappresentazione della scacchiera)
-        self.observation_space = spaces.Box(low=0, high=2, shape=(8, 8), dtype=np.int32)
-    
+        self.game = Game(None)
+        self.board = self.game.board
+        self.done = False
+
+
     def reset(self):
-        """
-        Reset del gioco: la scacchiera e gli stati vengono riportati al valore iniziale.
-        """
         self.game.reset()
-        self.turn = BLACK
-        return self.get_observation()
-    
-    def step(self, action):
-        """
-        Esegui un'azione (sposta un pezzo da una casella all'altra) e restituisci lo stato successivo.
+        self.board = self.game.board
+        self.done = False
+        return self.get_state()
+
+
+    def step(self, action, capture_move_exists):
+        # Decodifica l'azione in coordinate        
+        from_row = action[0][0] # Riga di partenza
+        from_col = action[0][1] # Colonna di partenza
+        to_row = action[1][0] # Riga di arrivo
+        to_col = action[1][1] # Colonna di arrivo
         
-        Args:
-            action (int): Azione rappresentata da un numero che indica il movimento.
-        """
-        # Decodifica dell'azione
-        from_row = (action // 64)  # Calcola la riga di partenza
-        from_col = action % 64  # Calcola la colonna di partenza
-        
-        # Trova la mossa corrispondente (row, col) -> (row_dest, col_dest)
-        valid_moves = self.game.board.get_valid_moves_player(self.turn)
-        possible_moves = valid_moves.get((from_row, from_col), {})
+        # Muove la pedina
+        self.game.select(from_row, from_col)  # Seleziona la pedina da muovere
+        self.game.select(to_row, to_col) # Seleziona la casella di arrivo
 
-        if not possible_moves:
-            return self.get_observation(), -1, True, {}  # Mossa non valida, l'agente perde
+        # Il reward è +100 per vittoria, -100 per sconfitta, +10 per mosse con catture, -1 per mossa senza catture, -0.5 se l'agente sta perdendo
+        reward = 0
 
-        # Scegli una mossa casuale valida
-        move = random.choice(list(possible_moves.keys()))
-        row_dest, col_dest = move
-        
-        # Esegui la mossa
-        valid = self.game.select(from_row, from_col)
-        if valid:
-            self.game._move(row_dest, col_dest)
-
-        # Calcola la ricompensa
-        reward = self.calculate_reward()
-
-        # Verifica se il gioco è finito
-        done = self.is_done()
-
-        # Passa il turno all'altro giocatore
-        self.game.change_turn()
-
-        return self.get_observation(), reward, done, {}
-
-    def render(self):
-        """
-        Visualizza lo stato attuale del gioco (se necessario).
-        """
-        pass  # Poiché non abbiamo una finestra grafica, non è necessario renderizzare
-
-    def get_observation(self):
-        """
-        Restituisce la rappresentazione della scacchiera come una matrice 8x8.
-        """
-        board = np.zeros((8, 8), dtype=np.int32)
-        
-        for row in range(8):
-            for col in range(8):
-                piece = self.game.board.get_piece(row, col)
-                if piece != 0:
-                    board[row, col] = 1 if piece.color == WHITE else 2  # Rappresentazione dei pezzi bianchi (1) e neri (2)
-        
-        return board
-    
-    def calculate_reward(self):
-        """
-        Calcola la ricompensa per l'agente, basata sullo stato attuale del gioco.
-        """
-        winner = self.game.winner()
-        if winner == BLACK:
-            return 1  # Ricompensa per vincere
-        elif winner == WHITE:
-            return -1  # Penalità per perdere
+        if capture_move_exists:
+            reward += 10            # +10 se l'agente cattura
         else:
-            return 0  # Ricompensa neutra in caso di pareggio o partita in corso
+            reward -= 1             # -1 se l'agente non cattura
+        
+        if self.game.board.black_left < self.game.board.white_left:
+            reward -= 0.5           # -0.5 se l'agente sta perdendo
+        
+        if self.game.winner() == BLACK:
+            reward += 100           # +100 se l'agente ha vinto
+            self.done = True
+        
+        elif self.game.winner() == WHITE:
+            reward -= 100
+            self.done = True        # -100 se l'agente ha perso
+        
+        return self.get_state(), reward, self.done
+
+
+    def board_to_state(self, board):
+        state = []
+        for row in board.board:
+            for piece in row:
+                if piece is None:
+                    state.append(0)
+                else:
+                    try:
+                        val = 1 if piece.color == BLACK else 2
+                        if piece.king:
+                            val += 2
+                    except AttributeError:
+                        # Se piece è già un int
+                        val = piece
+                    state.append(val)
+        return state
+
+
+    def get_state(self):
+        state = self.board_to_state(self.board)
+        return tuple(state)  # Converte la lista in tupla perché le tuple sono hashable e possono essere usate come chiavi in un dizionario
+
+
+    def set_state(self, next_state):
+        for i, val in enumerate(next_state):
+            
+            row = i // 8
+            col = i % 8
+            if val == 1:
+                self.board.board[row][col] = Piece(row, col, BLACK)
+            elif val == 2:
+                self.board.board[row][col] = Piece(row, col, WHITE)
+            elif val == 3:
+                piece = self.board.get_piece(row, col)
+                piece.make_king()
+        
+        #print(f"Stato scacchiera:")
+        #for item in self.board.board:
+        #    print(item)
+        #print("\n")
     
-    def is_done(self):
-        """
-        Controlla se il gioco è finito.
-        """
-        return self.game.winner() is not None

@@ -5,24 +5,26 @@ from .constants import BLACK, WHITE, BLUE, SQUARE_SIZE
 from .board import Board
 
 class Game:
-    def __init__(self, win):
+    def __init__(self, win=None):
         self._init()
-        self.win = win
+        self.window = win
         
         
     def update(self):
         """
         Aggiorna la scacchiera e la sua rappresentazione interna e la disegna a schermo
         """
-        self.board.draw(self.win)
+        if self.window is None:
+            return
+    
+        self.board.draw(self.window)
         self.draw_valid_moves(self.valid_moves)
         pygame.display.update()
-    
     
     def _init(self):
         self.selected = None
         self.board = Board()
-        self.turn = BLACK
+        self.turn = WHITE
         #self.turn_counter = 0
         self.valid_moves = {}
         
@@ -46,7 +48,7 @@ class Game:
         
         # Se una pedina risulta precedentemente selezionata
         if self.selected:
-            # Si prova a muovaerla nella casella appena selezionata
+            # Si prova a muoverla nella casella appena selezionata
             result = self._move(row, col)
             
             # Se questo non è possibile, la selezione viene resettata e la funzione viene chiamata nuovamente (con la differenza che questa volta, self.selected è uguale a None)
@@ -58,7 +60,7 @@ class Game:
         piece = self.board.get_piece(row, col)
 
         # Calcolo di tutte le mosse disponibili per il giocatore
-        player_moves = self.board.get_valid_moves_player(self.turn)
+        player_moves, _ = self.board.get_valid_moves_player(self.turn)
 
         # Filtra tutte le mosse che prevedono catture
         capture_moves = {pos: moves for pos, moves in player_moves.items() if any(moves.values())}
@@ -124,7 +126,7 @@ class Game:
         """
         for move in moves:
             row, col = move
-            pygame.draw.circle(self.win, BLUE, (col * SQUARE_SIZE + SQUARE_SIZE//2, row * SQUARE_SIZE + SQUARE_SIZE//2), 15)
+            pygame.draw.circle(self.window, BLUE, (col * SQUARE_SIZE + SQUARE_SIZE//2, row * SQUARE_SIZE + SQUARE_SIZE//2), 15)
 
     
     
@@ -132,7 +134,6 @@ class Game:
         """
         Passa il turno all'altro giocatore, svuotando il dizionario di mosse possibili e resettando le selezioni
         """
-        # self.turn_counter += 1
         self.valid_moves = {}
         self.selected = None
         self.turn = WHITE if self.turn == BLACK else BLACK
