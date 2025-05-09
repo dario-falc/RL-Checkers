@@ -20,7 +20,8 @@ def get_valid_actions(game):
     
     valid_actions = {}
     # Ottiene le mosse valide per il giocatore corrente (già filtrate per eventuali catture obbligatorie)
-    moves_player, _ = game.board.get_valid_moves_player(game.turn)
+    moves_player, _ = game.board.get_valid_moves_player(BLACK)#game.turn)
+    
     for (from_row, from_col), moves in moves_player.items():
         for (to_row, to_col), skipped in moves.items():
             action = ((from_row, from_col), (to_row, to_col))
@@ -49,7 +50,7 @@ def main():
     run = True
     while run:
         clock.tick(FPS)
-
+        
         # Turno dell'agente (assumiamo che l'agente giochi con i pezzi neri)
         if game.turn == BLACK:
             state = env.get_state()
@@ -58,9 +59,12 @@ def main():
                 print("Nessuna mossa valida per l'agente, vincitore: WHITE!")
                 run = False
                 continue
-
+            
             # Visualizza in console il processo decisionale
             print("\n[AGENT DECISION] Q-values per le mosse valide:")
+            
+            print(f"State: {state}")
+            
             for action, info in valid_actions.items():
                 q_value = agent.get_q(state, action)
                 print(f"Azione da {info['from']} a {info['to']}, cattura: {info['skipped']}, Q-value: {q_value:.4f}")
@@ -85,6 +89,11 @@ def main():
                 pos = pygame.mouse.get_pos()
                 row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
                 game.select(row, col)
+                
+                # Aggiornamento dell'environment
+                state = env.board_to_state(game.board)
+                env.set_state(state)
+                
             
             if game.board.white_left == 0:
                 print("Nessuna mossa valida per il giocatore, vincitore: BLACK!")

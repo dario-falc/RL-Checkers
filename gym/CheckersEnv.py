@@ -75,14 +75,23 @@ class CheckersEnv:
 
     def set_state(self, next_state):
         for i, val in enumerate(next_state):
-            
             row = i // 8
             col = i % 8
-            if val == 1:
+            #print(f"i:{i}, val:{val}\n")
+            if val == 0:
+                self.board.board[row][col] = 0
+            elif val == 1:
                 self.board.board[row][col] = Piece(row, col, BLACK)
             elif val == 2:
                 self.board.board[row][col] = Piece(row, col, WHITE)
-            elif val == 3:
+            
+            if val == 3:
+                self.board.board[row][col] = Piece(row, col, BLACK)
+                piece = self.board.get_piece(row, col)
+                piece.make_king()
+            
+            elif val == 4:
+                self.board.board[row][col] = Piece(row, col, WHITE)
                 piece = self.board.get_piece(row, col)
                 piece.make_king()
         
