@@ -1,0 +1,17 @@
+# Core dependencies
+pygame>=2.1.0
+torch>=1.11.0
+numpy>=1.21.0
+matplotlib>=3.5.0
+
+# Optional dependencies for better performance
+torchvision>=0.12.0
+tqdm>=4.64.0
+
+# Development dependencies
+jupyter>=1.0.0
+tensorboard>=2.8.0
+
+# For data analysis and visualization
+pandas>=1.4.0
+seaborn>=0.11.0
